@@ -35,12 +35,25 @@ public class IndexServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         EntityManager em = DBUtil.createEntityManager();
 
-        List<Tasks> Tasks = em.createNamedQuery("getAllTasks", Tasks.class).getResultList();
-        response.getWriter().append(Integer.valueOf(Tasks.size()).toString());
+        int page = 1;
+        try {
+            page = Integer.parseInt(request.getParameter("page"));
+        } catch(NumberFormatException e) {}
+
+        List<Tasks> Tasks = em.createNamedQuery("getAllTasks", Tasks.class)
+                                   .setFirstResult(15 * (page - 1))
+                                   .setMaxResults(15)
+                                   .getResultList();
+
+
+        long Tasks_count = (long)em.createNamedQuery("getTasksCount", Long.class)
+                                      .getSingleResult();
 
         em.close();
 
         request.setAttribute("Tasks", Tasks);
+        request.setAttribute("Tasks_count", Tasks_count);
+        request.setAttribute("page", page);
 
         if(request.getSession().getAttribute("flush") != null) {
             request.setAttribute("flush", request.getSession().getAttribute("flush"));
